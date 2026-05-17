@@ -134,6 +134,11 @@ input { font-family: inherit; }
   flex-direction: column;
   overflow-y: auto;
   position: relative;
+  /* Momentum scrolling on iOS, smooth jumps on Android Chrome. */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  /* Don't let pull-down-to-refresh propagate to the browser. */
+  overscroll-behavior-y: contain;
 }
 .screen::-webkit-scrollbar { display: none; }
 .screen { scrollbar-width: none; }
@@ -143,7 +148,10 @@ input { font-family: inherit; }
   display: flex;
   flex-direction: column;
 }
-.has-tabbar .screen-body { padding-bottom: 108px; }
+.has-tabbar .screen-body {
+  /* Reserve room for the absolutely-positioned tab-bar AND the device home indicator. */
+  padding-bottom: calc(108px + env(safe-area-inset-bottom, 0px));
+}
 
 /* ============ Common UI ============ */
 .btn {
@@ -244,8 +252,41 @@ input { font-family: inherit; }
 /* ============ Onboarding ============ */
 .ob {
   background: linear-gradient(180deg, var(--primary-soft) 0%, #fff 65%);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* prevents horizontal bleed from the swipe container */
 }
-.ob .screen-body { padding-top: 24px; }
+/* Horizontal swipe container — native scroll-snap, no JS gesture library. */
+.ob-slides {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.ob-slides::-webkit-scrollbar { display: none; }
+.ob-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 16px 26px 8px;
+  overflow-y: auto; /* allow vertical scroll within a slide on tiny viewports */
+  scrollbar-width: none;
+}
+.ob-slide::-webkit-scrollbar { display: none; }
+.ob-bottom {
+  flex-shrink: 0;
+  padding: 4px 26px calc(20px + env(safe-area-inset-bottom, 0px));
+}
 .ob-illust {
   width: 220px;
   height: 220px;
@@ -296,14 +337,24 @@ input { font-family: inherit; }
   height: 10px;
   border-radius: 50%;
   background: #C7D8DD;
-  transition: all 0.2s;
+  transition: all 0.25s ease;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  /* Larger invisible hit area for senior fingers */
+  position: relative;
+}
+.dot::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
 }
 .dot.active {
   width: 28px;
   border-radius: 5px;
   background: var(--primary);
 }
-.ob-actions { margin-top: auto; padding: 8px 0 4px; }
+.ob-actions { padding: 0 0 4px; }
 
 /* ============ Main (mic) ============ */
 .main-screen {
@@ -411,7 +462,8 @@ input { font-family: inherit; }
   display: flex;
   background: #fff;
   border-top: 1px solid var(--border);
-  padding: 8px 12px 20px;
+  /* Bottom padding grows to clear the iPhone home indicator / Android nav bar. */
+  padding: 8px 12px calc(20px + env(safe-area-inset-bottom, 0px));
   flex-shrink: 0;
   position: absolute;
   bottom: 0;

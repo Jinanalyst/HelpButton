@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Mic, Phone, Shield } from '../lib/icons';
 import { markOnboarded } from '../lib/storage';
 
@@ -26,62 +26,110 @@ const SLIDES: Slide[] = [
   },
 ];
 
+function multiline(text: string) {
+  const lines = text.split('\n');
+  return lines.map((line, i) => (
+    <span key={i}>
+      {line}
+      {i < lines.length - 1 && <br />}
+    </span>
+  ));
+}
+
 export function Onboarding({ onDone }: { onDone: () => void }) {
   const [idx, setIdx] = useState(0);
-  const slide = SLIDES[idx];
+  const containerRef = useRef<HTMLDivElement>(null);
+  const scrollTimeout = useRef<number | null>(null);
+
+  // Update idx when the user finishes swiping. Debounced so we only react
+  // to settled positions, not every scroll-snap intermediate frame.
+  const handleScroll = useCallback(() => {
+    const c = containerRef.current;
+    if (!c) return;
+    if (scrollTimeout.current !== null) window.clearTimeout(scrollTimeout.current);
+    scrollTimeout.current = window.setTimeout(() => {
+      const w = c.clientWidth || 1;
+      const newIdx = Math.round(c.scrollLeft / w);
+      const clamped = Math.max(0, Math.min(SLIDES.length - 1, newIdx));
+      setIdx((prev) => (prev !== clamped ? clamped : prev));
+    }, 60);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (scrollTimeout.current !== null) window.clearTimeout(scrollTimeout.current);
+    };
+  }, []);
+
+  // Programmatic scroll used by the 이전 / 다음 buttons and dot taps.
+  const goTo = (i: number) => {
+    const c = containerRef.current;
+    if (!c) return;
+    const target = Math.max(0, Math.min(SLIDES.length - 1, i));
+    c.scrollTo({ left: target * c.clientWidth, behavior: 'smooth' });
+  };
 
   const finish = () => {
     markOnboarded();
     onDone();
   };
 
-  return (
-    <section className="screen ob" aria-label={`안내 ${idx + 1}/3`}>
-      <div className="screen-body">
-        <div className="ob-illust">{slide.illust}</div>
-        <h1>
-          {slide.title.split('\n').map((line, i) => (
-            <span key={i}>
-              {line}
-              {i < slide.title.split('\n').length - 1 && <br />}
-            </span>
-          ))}
-        </h1>
-        <p>
-          {slide.subtitle.split('\n').map((line, i) => (
-            <span key={i}>
-              {line}
-              {i < slide.subtitle.split('\n').length - 1 && <br />}
-            </span>
-          ))}
-        </p>
+  const isLast = idx === SLIDES.length - 1;
 
-        <div className="dots" aria-hidden="true">
+  return (
+    <section className="screen ob" aria-label={`안내 ${idx + 1} / ${SLIDES.length}`}>
+      <div
+        ref={containerRef}
+        className="ob-slides"
+        onScroll={handleScroll}
+        role="region"
+        aria-label="안내 슬라이드"
+      >
+        {SLIDES.map((slide, i) => (
+          <article
+            key={i}
+            className="ob-slide"
+            aria-hidden={i !== idx}
+            aria-label={`${i + 1}번째 안내`}
+          >
+            <div className="ob-illust">{slide.illust}</div>
+            <h1>{multiline(slide.title)}</h1>
+            <p>{multiline(slide.subtitle)}</p>
+          </article>
+        ))}
+      </div>
+
+      <div className="ob-bottom">
+        <div className="dots" role="tablist" aria-label="안내 순서">
           {SLIDES.map((_, i) => (
-            <span key={i} className={`dot${i === idx ? ' active' : ''}`} />
+            <button
+              key={i}
+              type="button"
+              role="tab"
+              aria-selected={i === idx}
+              aria-label={`${i + 1}번째 안내로 이동`}
+              className={`dot${i === idx ? ' active' : ''}`}
+              onClick={() => goTo(i)}
+            />
           ))}
         </div>
 
         <div className="ob-actions">
-          {idx === 0 && (
-            <button className="btn btn-primary" type="button" onClick={() => setIdx(1)}>
-              다음
-            </button>
-          )}
-          {idx > 0 && idx < SLIDES.length - 1 && (
-            <div className="btn-row">
-              <button className="btn btn-ghost" type="button" onClick={() => setIdx(idx - 1)}>
-                이전
-              </button>
-              <button className="btn btn-primary" type="button" onClick={() => setIdx(idx + 1)}>
-                다음
-              </button>
-            </div>
-          )}
-          {idx === SLIDES.length - 1 && (
+          {isLast ? (
             <button className="btn btn-primary" type="button" onClick={finish}>
               시작하기
             </button>
+          ) : (
+            <div className="btn-row">
+              {idx > 0 && (
+                <button className="btn btn-ghost" type="button" onClick={() => goTo(idx - 1)}>
+                  이전
+                </button>
+              )}
+              <button className="btn btn-primary" type="button" onClick={() => goTo(idx + 1)}>
+                다음
+              </button>
+            </div>
           )}
         </div>
       </div>
