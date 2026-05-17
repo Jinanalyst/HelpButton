@@ -3,9 +3,9 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "PASTE_YOUR_PACKAGE_NAME_HERE",
+      "package_name": "kr.helpbutton.app",
       "sha256_cert_fingerprints": [
-        "PASTE_YOUR_APK_SHA256_FINGERPRINT_HERE"
+        "3E:47:A4:80:F6:A5:B1:FB:44:82:BD:05:59:28:41:0A:77:3A:18:2F:82:58:FD:9A:C2:A1:89:68:4A:A2:A0:16"
       ]
     }
   }
