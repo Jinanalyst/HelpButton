@@ -128,30 +128,39 @@ input { font-family: inherit; }
 }
 
 /* ============ Screen container ============ */
+/*
+ * IMPORTANT layout invariant:
+ *   .screen          → flex column, NO scroll. Owns absolute-positioned overlays.
+ *   .screen-body     → flex: 1, owns the vertical scroll.
+ *   .tab-bar         → regular flex sibling of .screen-body — naturally pinned.
+ *
+ * Earlier we had .screen as the scroll container with an absolutely-positioned
+ * tab-bar. That made `bottom: 0` anchor to the bottom of the scrolled content
+ * (not the viewport), so the tab-bar drifted into the middle of the visible
+ * area as users scrolled. The structure below avoids that class of bug.
+ */
 .screen {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
   position: relative;
-  /* Momentum scrolling on iOS, smooth jumps on Android Chrome. */
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-  /* Don't let pull-down-to-refresh propagate to the browser. */
-  overscroll-behavior-y: contain;
+  overflow: hidden;
 }
-.screen::-webkit-scrollbar { display: none; }
-.screen { scrollbar-width: none; }
 .screen-body {
   flex: 1;
   padding: 12px 24px 28px;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  /* Momentum scrolling on iOS, smooth jumps on Android Chrome. */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior-y: contain;
 }
-.has-tabbar .screen-body {
-  /* Reserve room for the absolutely-positioned tab-bar AND the device home indicator. */
-  padding-bottom: calc(108px + env(safe-area-inset-bottom, 0px));
-}
+.screen-body::-webkit-scrollbar { display: none; }
+.screen-body { scrollbar-width: none; }
+/* No more padding-bottom hack — the tab-bar is now a real flex sibling
+   that takes its own space; content can't slide underneath it. */
 
 /* ============ Common UI ============ */
 .btn {
@@ -459,17 +468,15 @@ input { font-family: inherit; }
 
 /* ============ Bottom tabs ============ */
 .tab-bar {
+  /* Regular flex item — naturally sits at the bottom of .screen. NO absolute
+     positioning. The bottom padding still grows to clear iOS home indicator
+     and Android nav bar. */
   display: flex;
+  flex-shrink: 0;
   background: #fff;
   border-top: 1px solid var(--border);
-  /* Bottom padding grows to clear the iPhone home indicator / Android nav bar. */
   padding: 8px 12px calc(20px + env(safe-area-inset-bottom, 0px));
-  flex-shrink: 0;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 20;
+  z-index: 1;
 }
 .tab {
   flex: 1;
