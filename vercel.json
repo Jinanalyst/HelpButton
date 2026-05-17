@@ -5,7 +5,6 @@
   "framework": "vite",
   "functions": {
     "api/classify.ts": {
-      "runtime": "nodejs22.x",
       "maxDuration": 30
     }
   },
