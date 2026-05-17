@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="index,follow" />
+    <title>개인정보 처리방침 — 헬프버튼</title>
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet" />
+    <style>
+      *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: #F4F8FA;
+        color: #14222F;
+        line-height: 1.7;
+        padding: 24px 20px 80px;
+      }
+      .wrap { max-width: 720px; margin: 0 auto; }
+      header {
+        padding: 8px 0 24px;
+        border-bottom: 1px solid #E1EAEE;
+        margin-bottom: 28px;
+      }
+      h1 {
+        font-size: 1.8rem;
+        font-weight: 900;
+        color: #0F3D5C;
+        letter-spacing: -0.02em;
+        line-height: 1.3;
+        word-break: keep-all;
+      }
+      .meta { font-size: 0.9rem; color: #8696A4; margin-top: 8px; font-weight: 500; }
+      h2 {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: #0F3D5C;
+        margin: 28px 0 10px;
+        letter-spacing: -0.01em;
+        word-break: keep-all;
+      }
+      p, li { font-size: 1rem; color: #14222F; margin-bottom: 8px; word-break: keep-all; font-weight: 500; }
+      ul { padding-left: 22px; margin-bottom: 12px; }
+      li { margin-bottom: 6px; }
+      strong { font-weight: 700; color: #0F3D5C; }
+      .callout {
+        background: #E8F6F8;
+        border: 1px solid #B9DDE2;
+        border-radius: 16px;
+        padding: 16px 18px;
+        margin: 16px 0;
+        font-weight: 500;
+      }
+      .callout b { color: #088694; font-weight: 800; }
+      .back {
+        display: inline-block;
+        margin-bottom: 18px;
+        font-size: 0.95rem;
+        color: #0BA5B7;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      .back::before { content: '‹ '; }
+      a { color: #0BA5B7; font-weight: 600; }
+      .footer-note {
+        margin-top: 40px;
+        padding: 16px;
+        background: #fff;
+        border: 1px solid #E1EAEE;
+        border-radius: 14px;
+        font-size: 0.9rem;
+        color: #4A5E6F;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <a class="back" href="/">홈으로 돌아가기</a>
+      <header>
+        <h1>개인정보 처리방침</h1>
+        <div class="meta">시행일: 2026년 5월 17일 · 헬프버튼 (HelpButton)</div>
+      </header>
+
+      <div class="callout">
+        <b>한눈에 보기:</b> 헬프버튼은 시니어 사용자가 안전하게 도움을 받을 수 있도록 만들어진 음성 도우미입니다. 로그인 없이 사용하실 수 있으며, 도움 기록과 보호자 정보는 사용자의 휴대폰 안에만 저장됩니다.
+      </div>
+
+      <h2>1. 수집하는 정보</h2>
+      <p>헬프버튼은 서비스 제공에 꼭 필요한 최소한의 정보만 처리합니다.</p>
+      <ul>
+        <li><strong>음성 입력 텍스트(transcript):</strong> 마이크 버튼을 눌러 말씀하신 내용을 텍스트로 변환합니다. 이 텍스트는 의도 분류 및 보이스피싱 위험 평가를 위해 일시적으로 처리됩니다.</li>
+        <li><strong>보호자 연락처:</strong> 사용자가 직접 입력한 가족·보호자의 이름, 관계, 전화번호.</li>
+        <li><strong>도움 기록:</strong> 사용자가 버튼을 누른 시각, 분류된 의도(예: "보이스피싱 확인"), 위험 등급.</li>
+        <li><strong>앱 설정:</strong> 글자 크기, 음량, 자동 가족 알림 여부 등.</li>
+      </ul>
+      <p><strong>수집하지 않는 정보:</strong> 이름, 주민등록번호, 계좌번호, 카드번호, 비밀번호, 인증번호(OTP), 위치 정보, 연락처 목록, 통화 기록, 문자 메시지 내용은 수집하지 않습니다.</p>
+
+      <h2>2. 정보의 저장 위치</h2>
+      <ul>
+        <li><strong>휴대폰 안에만 저장(로컬):</strong> 보호자 연락처, 도움 기록, 앱 설정은 사용자의 휴대폰 안에만(브라우저 localStorage) 저장됩니다. 헬프버튼 서버로 전송되지 않습니다.</li>
+        <li><strong>일시 처리 후 폐기:</strong> 음성 입력 텍스트는 분류 응답을 받기 위해 Anthropic의 Claude API로 전송된 뒤 즉시 폐기되며, 헬프버튼 서버에 저장되지 않습니다.</li>
+      </ul>
+
+      <h2>3. 정보의 제3자 제공</h2>
+      <p>다음의 처리위탁 외에 어떠한 제3자에게도 개인정보를 제공하지 않습니다.</p>
+      <ul>
+        <li><strong>Anthropic, PBC (Claude API):</strong> 음성 입력 텍스트의 의도 분류 및 위험 평가 목적. Anthropic은 API로 전송된 사용자 데이터를 모델 학습에 사용하지 않습니다(<a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener">Anthropic 개인정보처리방침</a> 참조).</li>
+        <li><strong>Vercel Inc.:</strong> 웹 호스팅 및 서버리스 함수 실행 인프라.</li>
+      </ul>
+
+      <h2>4. 자동으로 처리하지 않는 행동</h2>
+      <div class="callout">
+        헬프버튼은 <b>송금, 결제, 비밀번호, 인증번호(OTP), 개인정보 입력</b>을 절대로 자동으로 처리하지 않습니다. 통화 연결, 메시지 발송, 위험 알림 등 모든 실행은 사용자의 명시적 확인 후에만 이루어집니다.
+      </div>
+
+      <h2>5. 사용자의 권리</h2>
+      <ul>
+        <li>도움 기록과 보호자 정보는 "보호자" 화면에서 언제든지 직접 확인·수정·삭제하실 수 있습니다.</li>
+        <li>앱을 삭제하시면 휴대폰에 저장된 모든 데이터가 즉시 함께 삭제됩니다.</li>
+        <li>처리방침에 대한 문의나 권리 행사 요청은 아래 연락처로 알려주세요.</li>
+      </ul>
+
+      <h2>6. 보안</h2>
+      <p>모든 통신은 HTTPS로 암호화됩니다. 음성 입력 텍스트의 처리는 안전한 TLS 연결을 통해서만 이루어집니다.</p>
+
+      <h2>7. 어린이의 개인정보</h2>
+      <p>헬프버튼은 만 14세 미만 어린이를 대상으로 하지 않으며, 어린이의 개인정보를 의도적으로 수집하지 않습니다.</p>
+
+      <h2>8. 처리방침의 변경</h2>
+      <p>처리방침이 변경되는 경우 이 페이지를 통해 공지하며, 중요한 변경 사항은 앱 내에서도 안내합니다.</p>
+
+      <h2>9. 연락처</h2>
+      <p>
+        개인정보보호 책임자: [성명을 적어주세요]<br />
+        이메일: <a href="mailto:privacy@helpbutton.example">privacy@helpbutton.example</a><br />
+        <span style="color:#8696A4; font-size:0.85rem;">(배포 전에 실제 연락처로 교체해주세요.)</span>
+      </p>
+
+      <div class="footer-note">
+        헬프버튼은 Google Play 정책 및 「개인정보 보호법」을 준수합니다. 더 안전하고 따뜻한 서비스를 위해 늘 노력하겠습니다.
+      </div>
+    </div>
+  </body>
+</html>
