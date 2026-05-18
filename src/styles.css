@@ -364,6 +364,14 @@ input { font-family: inherit; }
   background: var(--primary);
 }
 .ob-actions { padding: 0 0 4px; }
+.ob-apk-link {
+  display: block;
+  text-align: center;
+  margin-top: 12px;
+  font-size: 0.95rem;
+  color: var(--primary);
+  text-decoration: underline;
+}
 
 /* ============ Main (mic) ============ */
 .main-screen {

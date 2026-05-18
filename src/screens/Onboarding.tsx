@@ -116,9 +116,18 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
 
         <div className="ob-actions">
           {isLast ? (
-            <button className="btn btn-primary" type="button" onClick={finish}>
-              시작하기
-            </button>
+            <>
+              <button className="btn btn-primary" type="button" onClick={finish}>
+                시작하기
+              </button>
+              <a
+                className="ob-apk-link"
+                href="/helpbutton.apk"
+                download="helpbutton.apk"
+              >
+                Android 앱(APK) 다운로드
+              </a>
+            </>
           ) : (
             <div className="btn-row">
               {idx > 0 && (

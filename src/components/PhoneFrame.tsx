@@ -1,16 +1,39 @@
 // Desktop-only phone shell. On mobile (<720px) it disappears and the app
 // renders full-screen — which is what you want on an installed PWA.
 
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+
+function formatNow(): string {
+  // Uses the device's local timezone (which on a phone follows the user's
+  // location) and the user's locale (12h vs 24h).
+  return new Intl.DateTimeFormat(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date());
+}
 
 export function PhoneFrame({ children }: { children: ReactNode }) {
+  const [now, setNow] = useState(formatNow);
+
+  useEffect(() => {
+    let interval = 0;
+    const timeout = window.setTimeout(() => {
+      setNow(formatNow());
+      interval = window.setInterval(() => setNow(formatNow()), 60000);
+    }, 60000 - (Date.now() % 60000));
+    return () => {
+      window.clearTimeout(timeout);
+      if (interval) window.clearInterval(interval);
+    };
+  }, []);
+
   return (
     <div className="frame-wrap">
       <div className="phone">
         <div className="phone-inner">
           <div className="dynamic-island" aria-hidden="true" />
           <div className="status-bar">
-            <span>9:41</span>
+            <span>{now}</span>
             <span className="status-right">
               <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor" aria-hidden="true">
                 <rect x="0" y="8" width="3" height="4" rx="1" />
