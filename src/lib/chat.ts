@@ -67,6 +67,13 @@ export function runChatAction(action: ChatAction): void {
       window.location.href = `sms:${sanitizePhone(action.phone)}${body}`;
       return;
     }
+    case 'open_map': {
+      const dest = (action.destination ?? '').trim();
+      if (!dest) return;
+      const url = `https://map.kakao.com/link/search/${encodeURIComponent(dest)}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+      return;
+    }
     case 'show_step_guide':
     case 'none':
     default:

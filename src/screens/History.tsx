@@ -1,5 +1,5 @@
 import { BottomTabs, type Tab } from '../components/BottomTabs';
-import { ChevronLeft, ChevronRight, Clock, Phone, Shield, Warning } from '../lib/icons';
+import { ChevronLeft, ChevronRight, Clock, Map, Phone, Shield, Warning } from '../lib/icons';
 import { getHistory } from '../lib/storage';
 import type { HistoryItem } from '../lib/types';
 
@@ -44,6 +44,9 @@ function iconFor(item: HistoryItem) {
   }
   if (intent === 'scam_check') {
     return { cls: 'warn', icon: <Shield size={26} /> };
+  }
+  if (intent === 'navigation') {
+    return { cls: 'primary', icon: <Map size={26} /> };
   }
   return { cls: 'ok', icon: <Clock size={26} /> };
 }

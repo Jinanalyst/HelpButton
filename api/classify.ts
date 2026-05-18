@@ -33,6 +33,7 @@ const SYSTEM_PROMPT = `당신은 "헬프버튼"입니다. 한국의 시니어 �
 - "family_call": 가족에게 전화/메시지 부탁. 예) "큰아들한테 전화해줘", "딸한테 잘 도착했다고 보내줘"
 - "help_message": 가족이나 친구에게 도움을 요청하는 메시지. 예) "허리가 아파", "병원 같이 가달라고 해줘"
 - "phone_guide": 스마트폰 사용법 안내. 예) "사진 어떻게 보내?", "글자 크게 하고 싶어"
+- "navigation": 길 찾기/장소 찾기/지도 안내 요청. 예) "병원 가는 길 알려줘", "가까운 약국 찾아줘", "집으로 가는 길 알려줘"
 - "unsafe_request": 송금/결제/비밀번호/인증번호/개인정보 관련 요청. 자동 실행 절대 불가.
 - "unknown": 위 어디에도 해당하지 않거나 의미가 불분명함.
 
@@ -48,6 +49,7 @@ const SYSTEM_PROMPT = `당신은 "헬프버튼"입니다. 한국의 시니어 �
 - "delete_message": 위험한 문자를 삭제하도록 안내. 실제 삭제는 사용자가 직접.
 - "open_setting": 폰 설정(글자 크기, 음량 등) 안내.
 - "show_step_guide": 단계별 사용법 안내. message_template에 1줄씩 단계를 적음.
+- "open_map": 지도 앱에서 길찾기/장소 검색을 열어드림. destination에 사용자가 말한 목적지를 짧고 자연스러운 한국어로 적음(예: "가까운 약국", "서울대학교병원", "집"). 위치를 모르는 일반 명사("집", "병원")는 그대로 적되, 가능하면 더 구체적으로 적기. confirm_prompt 예) "지도에서 가까운 약국을 찾아볼까요?"
 - "ignore": 무시하고 지나가도 됨.
 - "ask_again": 다시 말씀해주세요. 의미가 불분명할 때.
 
@@ -65,7 +67,7 @@ const SCHEMA = {
   properties: {
     intent: {
       type: 'string',
-      enum: ['scam_check', 'family_call', 'help_message', 'phone_guide', 'unsafe_request', 'unknown'],
+      enum: ['scam_check', 'family_call', 'help_message', 'phone_guide', 'navigation', 'unsafe_request', 'unknown'],
     },
     risk_level: { type: 'string', enum: ['none', 'low', 'medium', 'high'] },
     title: { type: 'string' },
@@ -85,16 +87,18 @@ const SCHEMA = {
               'delete_message',
               'open_setting',
               'show_step_guide',
+              'open_map',
               'ignore',
               'ask_again',
             ],
           },
           label: { type: 'string' },
           message_template: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+          destination: { anyOf: [{ type: 'string' }, { type: 'null' }] },
           confirm_prompt: { type: 'string' },
           tone: { type: 'string', enum: ['primary', 'danger', 'ghost'] },
         },
-        required: ['kind', 'label', 'message_template', 'confirm_prompt', 'tone'],
+        required: ['kind', 'label', 'message_template', 'destination', 'confirm_prompt', 'tone'],
         additionalProperties: false,
       },
     },

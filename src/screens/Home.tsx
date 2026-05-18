@@ -120,6 +120,7 @@ export function Home({ onResult, onTab, onStartChat }: Props) {
             <div className="mic-examples">
               <div className="example-chip">"이 문자 수상해"</div>
               <div className="example-chip">"{family.relation}에게 전화해줘"</div>
+              <div className="example-chip">"가까운 약국 알려줘"</div>
             </div>
 
             <button

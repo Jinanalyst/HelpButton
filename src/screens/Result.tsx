@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, Mic, Phone, Trash, Warning, Message } from '../lib/icons';
+import { ChevronLeft, Mic, Phone, Trash, Warning, Message, Map } from '../lib/icons';
 import { getFamily } from '../lib/storage';
 import { speak } from '../lib/speech';
 import type { ClassifyResult, SuggestedAction, RiskLevel } from '../lib/types';
@@ -27,6 +27,8 @@ function actionIcon(kind: SuggestedAction['kind']) {
       return <Message size={22} />;
     case 'delete_message':
       return <Trash size={22} />;
+    case 'open_map':
+      return <Map size={22} />;
     default:
       return null;
   }
@@ -59,6 +61,18 @@ export function Result({ result, onBack, onRetry }: Props) {
         // Step guides are presented inline via the message_template, no extra action.
         speak(action.message_template ?? '안내드릴게요.');
         break;
+      case 'open_map': {
+        // Kakao Map "link/search" — opens in the Kakao Map app on mobile via universal link,
+        // falls back to the web map on desktop. Senior-friendly default.
+        const dest = (action.destination ?? '').trim();
+        if (!dest) {
+          speak('어디로 가실지 한 번 더 말씀해 주세요.');
+          break;
+        }
+        const url = `https://map.kakao.com/link/search/${encodeURIComponent(dest)}`;
+        window.open(url, '_blank', 'noopener,noreferrer');
+        break;
+      }
       case 'open_setting':
         alert('설정 앱을 직접 열어 주세요.');
         break;

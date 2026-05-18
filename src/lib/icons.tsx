@@ -150,6 +150,16 @@ export function Type({ size = 24, ...rest }: IconProps) {
   );
 }
 
+export function Map({ size = 24, ...rest }: IconProps) {
+  return (
+    <svg {...base(size)} {...rest}>
+      <path d="M21 6v15l-6-3-6 3-6-3V3l6 3 6-3 6 3z" />
+      <line x1="9" y1="6" x2="9" y2="21" />
+      <line x1="15" y1="3" x2="15" y2="18" />
+    </svg>
+  );
+}
+
 export function Bell({ size = 24, ...rest }: IconProps) {
   return (
     <svg {...base(size)} {...rest}>

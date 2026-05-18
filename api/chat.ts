@@ -39,6 +39,7 @@ const SYSTEM_PROMPT = `당신은 "헬프버튼"입니다. 한국의 시니어 �
 - "send_message_family": 등록된 보호자에게 문자 (message에 짧은 초안 작성)
 - "open_dialer": 일반 번호로 전화 다이얼러 열기 (phone 필드에 번호)
 - "open_sms": 일반 번호로 문자 작성 화면 열기 (phone, message)
+- "open_map": 지도 앱에서 길찾기/장소 검색 열기 (destination에 목적지를 자연스러운 한국어로, 예: "가까운 약국", "서울대학교병원")
 - "show_step_guide": 폰 사용법 단계 안내 (steps에 1줄씩)
 - "none": 행동 권유 없음
 행동은 사용자가 명확히 원할 때만 제안합니다. 어색하면 그냥 "none"으로 두세요.
@@ -49,11 +50,12 @@ const SYSTEM_PROMPT = `당신은 "헬프버튼"입니다. 한국의 시니어 �
   "reply": "사용자에게 말로 들려줄 한국어 답변 (1~3문장)",
   "risk": "none" | "low" | "medium" | "high",
   "action": {
-    "kind": "call_family" | "send_message_family" | "open_dialer" | "open_sms" | "show_step_guide" | "none",
+    "kind": "call_family" | "send_message_family" | "open_dialer" | "open_sms" | "open_map" | "show_step_guide" | "none",
     "label": "버튼에 보일 짧은 한국어",
     "phone": "010-...." | null,
     "message": "문자 초안" | null,
     "steps": ["1단계", "2단계"] | null,
+    "destination": "지도에서 찾을 목적지" | null,
     "confirm_prompt": "행동 전에 한 번 더 묻는 짧은 문장"
   } | null
 }`;
@@ -76,6 +78,7 @@ const SCHEMA = {
                 'send_message_family',
                 'open_dialer',
                 'open_sms',
+                'open_map',
                 'show_step_guide',
                 'none',
               ],
@@ -86,9 +89,10 @@ const SCHEMA = {
             steps: {
               anyOf: [{ type: 'array', items: { type: 'string' } }, { type: 'null' }],
             },
+            destination: { anyOf: [{ type: 'string' }, { type: 'null' }] },
             confirm_prompt: { type: 'string' },
           },
-          required: ['kind', 'label', 'phone', 'message', 'steps', 'confirm_prompt'],
+          required: ['kind', 'label', 'phone', 'message', 'steps', 'destination', 'confirm_prompt'],
           additionalProperties: false,
         },
       ],

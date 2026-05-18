@@ -6,6 +6,7 @@ export type Intent =
   | 'family_call'
   | 'help_message'
   | 'phone_guide'
+  | 'navigation'
   | 'unsafe_request'
   | 'unknown';
 
@@ -17,6 +18,7 @@ export type ActionKind =
   | 'delete_message'
   | 'open_setting'
   | 'show_step_guide'
+  | 'open_map'
   | 'ignore'
   | 'ask_again';
 
@@ -26,6 +28,8 @@ export interface SuggestedAction {
   kind: ActionKind;
   label: string;
   message_template: string | null;
+  // For 'open_map': free-form Korean destination (e.g. "가까운 약국", "서울대병원", "집").
+  destination: string | null;
   confirm_prompt: string;
   tone: ActionTone;
 }
@@ -86,6 +90,7 @@ export type ChatActionKind =
   | 'send_message_family'
   | 'open_dialer'
   | 'open_sms'
+  | 'open_map'
   | 'show_step_guide'
   | 'none';
 
@@ -95,6 +100,8 @@ export interface ChatAction {
   phone: string | null;
   message: string | null;
   steps: string[] | null;
+  // For 'open_map': free-form Korean destination.
+  destination: string | null;
   confirm_prompt: string;
 }
 
