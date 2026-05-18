@@ -28,6 +28,43 @@ export function HistoryDetail({ item, onBack }: Props) {
   const result = item.result;
   const replyTs = item.timestamp + 1000;
 
+  if (item.kind === 'chat' && item.chat) {
+    return (
+      <section className="screen chat-screen" aria-label="대화 기록">
+        <div className="screen-body">
+          <div className="app-bar">
+            <button className="icon-btn" type="button" onClick={onBack} aria-label="뒤로">
+              <ChevronLeft size={20} />
+            </button>
+            <h2>대화 기록</h2>
+          </div>
+
+          <div className="chat-day-divider">
+            <span>{fmtFull(item.timestamp)}</span>
+          </div>
+
+          {item.chat.turns.map((t, i) =>
+            t.role === 'user' ? (
+              <div className="chat-row outgoing" key={i}>
+                <div className="chat-meta-side">{fmtTime(t.timestamp)}</div>
+                <div className="chat-bubble outgoing">{t.content}</div>
+              </div>
+            ) : (
+              <div className="chat-row incoming" key={i}>
+                <div className="chat-avatar">HB</div>
+                <div className="chat-stack">
+                  <div className="chat-name">헬프버튼</div>
+                  <div className="chat-bubble incoming">{t.content}</div>
+                </div>
+                <div className="chat-meta-side">{fmtTime(t.timestamp)}</div>
+              </div>
+            ),
+          )}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="screen chat-screen" aria-label="대화 기록">
       <div className="screen-body">

@@ -1,7 +1,7 @@
 import { BottomTabs, type Tab } from '../components/BottomTabs';
 import { ChevronLeft, ChevronRight, Clock, Phone, Shield, Warning } from '../lib/icons';
 import { getHistory } from '../lib/storage';
-import type { HistoryItem, Intent } from '../lib/types';
+import type { HistoryItem } from '../lib/types';
 
 function fmtTime(ts: number): string {
   const d = new Date(ts);
@@ -31,9 +31,13 @@ function bucket(ts: number): '오늘' | '어제' | '이번 주' | '이전' {
   return '이전';
 }
 
-function iconFor(intent: Intent, risk: HistoryItem['risk_level']) {
-  if (intent === 'unsafe_request' || risk === 'high') {
+function iconFor(item: HistoryItem) {
+  const { intent, risk_level: risk } = item;
+  if (risk === 'high' || intent === 'unsafe_request') {
     return { cls: 'danger', icon: <Warning size={26} /> };
+  }
+  if (item.kind === 'chat') {
+    return { cls: 'primary', icon: <Clock size={26} /> };
   }
   if (intent === 'family_call' || intent === 'help_message') {
     return { cls: 'primary', icon: <Phone size={26} /> };
@@ -87,7 +91,7 @@ export function History({ onBack, onTab, onOpen }: Props) {
               <div className="history-day-label">{label}</div>
               <div className="history-list">
                 {group.map((item) => {
-                  const ico = iconFor(item.intent, item.risk_level);
+                  const ico = iconFor(item);
                   return (
                     <button
                       key={item.id}
@@ -98,7 +102,10 @@ export function History({ onBack, onTab, onOpen }: Props) {
                       <div className={`history-icon ${ico.cls}`}>{ico.icon}</div>
                       <div className="body">
                         <div className="title">{item.title}</div>
-                        <div className="meta">{fmtTime(item.timestamp)}</div>
+                        <div className="meta">
+                          {fmtTime(item.timestamp)}
+                          {item.kind === 'chat' && ` · 대화 ${item.chat?.turns.length ?? 0}회`}
+                        </div>
                       </div>
                       <ChevronRight size={20} color="#8696A4" />
                     </button>

@@ -142,4 +142,199 @@ export function stopSpeaking(): void {
   } catch {
     /* ignore */
   }
+  stopAiAudio();
+}
+
+// ---------------- OpenAI TTS (alloy) via /api/tts ----------------
+
+let currentAiAudio: HTMLAudioElement | null = null;
+
+export function stopAiAudio(): void {
+  if (currentAiAudio) {
+    try {
+      currentAiAudio.pause();
+      currentAiAudio.src = '';
+    } catch {
+      /* ignore */
+    }
+    currentAiAudio = null;
+  }
+}
+
+/**
+ * Speak Korean text using OpenAI tts-1 (alloy). Falls back to SpeechSynthesis
+ * if the endpoint isn't reachable or fails. Always cancels any prior speech.
+ */
+export async function speakAi(
+  text: string,
+  opts: { volume?: number; voice?: 'alloy' | 'shimmer' | 'nova' } = {},
+): Promise<void> {
+  stopSpeaking();
+  if (!text.trim()) return;
+  try {
+    const resp = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, voice: opts.voice ?? 'alloy' }),
+    });
+    if (!resp.ok) throw new Error(`tts_http_${resp.status}`);
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.volume = opts.volume ?? 1.0;
+    audio.onended = () => {
+      URL.revokeObjectURL(url);
+      if (currentAiAudio === audio) currentAiAudio = null;
+    };
+    currentAiAudio = audio;
+    await audio.play();
+  } catch {
+    // Fall back to browser TTS so seniors still hear something.
+    speak(text, { volume: opts.volume });
+  }
+}
+
+// ---------------- Whisper STT via /api/stt ----------------
+
+export interface RecordHandle {
+  promise: Promise<string>;
+  stop: () => void;
+  cancel: () => void;
+}
+
+/**
+ * Record from the mic until stop() is called, then upload to /api/stt and
+ * resolve with the Whisper transcript. Rejects with Error('mic_denied'),
+ * Error('no_speech_detected'), Error('stt_unavailable'), or Error('cancelled').
+ */
+export function recordToWhisper(): RecordHandle {
+  let cancelled = false;
+  let stopRequested = false;
+  let recorder: MediaRecorder | null = null;
+  let stream: MediaStream | null = null;
+
+  const promise = new Promise<string>(async (resolve, reject) => {
+    if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      reject(new Error('mic_unsupported'));
+      return;
+    }
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      reject(new Error('mic_denied'));
+      return;
+    }
+    const mime = pickRecorderMime();
+    try {
+      recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+    } catch {
+      cleanup();
+      reject(new Error('mic_unsupported'));
+      return;
+    }
+    const chunks: Blob[] = [];
+    recorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) chunks.push(e.data);
+    };
+    recorder.onerror = () => {
+      cleanup();
+      reject(new Error('mic_error'));
+    };
+    recorder.onstop = async () => {
+      cleanup();
+      if (cancelled) {
+        reject(new Error('cancelled'));
+        return;
+      }
+      const blob = new Blob(chunks, { type: chunks[0]?.type || mime || 'audio/webm' });
+      if (blob.size < 1000) {
+        reject(new Error('no_speech_detected'));
+        return;
+      }
+      try {
+        const form = new FormData();
+        form.append('audio', blob, `recording.${extFor(blob.type)}`);
+        const resp = await fetch('/api/stt', { method: 'POST', body: form });
+        if (!resp.ok) {
+          reject(new Error('stt_unavailable'));
+          return;
+        }
+        const payload = (await resp.json()) as { text?: string; error?: string };
+        if (!payload.text) {
+          reject(new Error(payload.error || 'no_speech_detected'));
+          return;
+        }
+        resolve(payload.text);
+      } catch {
+        reject(new Error('stt_unavailable'));
+      }
+    };
+    recorder.start();
+
+    // Hard cap so seniors who forget to release don't burn the API.
+    setTimeout(() => {
+      if (!stopRequested && recorder && recorder.state === 'recording') {
+        stopRequested = true;
+        try {
+          recorder.stop();
+        } catch {
+          /* ignore */
+        }
+      }
+    }, 30_000);
+  });
+
+  function cleanup() {
+    if (stream) {
+      for (const t of stream.getTracks()) t.stop();
+      stream = null;
+    }
+  }
+
+  return {
+    promise,
+    stop: () => {
+      stopRequested = true;
+      if (recorder && recorder.state === 'recording') {
+        try {
+          recorder.stop();
+        } catch {
+          /* ignore */
+        }
+      }
+    },
+    cancel: () => {
+      cancelled = true;
+      stopRequested = true;
+      if (recorder && recorder.state === 'recording') {
+        try {
+          recorder.stop();
+        } catch {
+          /* ignore */
+        }
+      }
+    },
+  };
+}
+
+function pickRecorderMime(): string | undefined {
+  if (typeof MediaRecorder === 'undefined') return undefined;
+  const candidates = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/mp4',
+    'audio/ogg;codecs=opus',
+  ];
+  for (const c of candidates) {
+    if (MediaRecorder.isTypeSupported(c)) return c;
+  }
+  return undefined;
+}
+
+function extFor(mime: string): string {
+  if (mime.includes('mp4')) return 'mp4';
+  if (mime.includes('ogg')) return 'ogg';
+  if (mime.includes('wav')) return 'wav';
+  if (mime.includes('mpeg')) return 'mp3';
+  return 'webm';
 }

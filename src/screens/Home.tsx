@@ -2,14 +2,15 @@ import { useState } from 'react';
 import { BottomTabs, type Tab } from '../components/BottomTabs';
 import { ListeningOverlay } from '../components/ListeningOverlay';
 import { Mic } from '../lib/icons';
-import { classify } from '../lib/api';
-import { addHistory, getFamily } from '../lib/storage';
-import { isSpeechSupported, listenOnce, speak } from '../lib/speech';
+import { classify, ClassifyUnavailableError } from '../lib/api';
+import { addHistory, getFamily, getSettings } from '../lib/storage';
+import { isSpeechSupported, listenOnce, speakAi, volumeFor } from '../lib/speech';
 import type { ClassifyResult } from '../lib/types';
 
 interface Props {
   onResult: (transcript: string, result: ClassifyResult) => void;
   onTab: (t: Tab) => void;
+  onStartChat: () => void;
 }
 
 function todayKo(): string {
@@ -18,7 +19,7 @@ function todayKo(): string {
   return `${d.getMonth() + 1}월 ${d.getDate()}일 ${days[d.getDay()]}요일`;
 }
 
-export function Home({ onResult, onTab }: Props) {
+export function Home({ onResult, onTab, onStartChat }: Props) {
   const [listening, setListening] = useState(false);
   const [partial, setPartial] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -71,11 +72,16 @@ export function Home({ onResult, onTab }: Props) {
         result,
       });
       // Speak the title aloud for accessibility.
-      speak(result.title);
+      void speakAi(result.title, { volume: volumeFor(getSettings().voiceVolume) });
       onResult(transcript, result);
     } catch (err) {
-      const message = err instanceof Error ? err.message : '잠시 후 다시 시도해 주세요.';
-      setError(`도움을 받을 수 없어요. ${message}`);
+      if (err instanceof ClassifyUnavailableError) {
+        if (err.reason === 'offline') setError('인터넷 연결을 확인해 주세요.');
+        else if (err.reason === 'rate_limited') setError('잠시 후 다시 시도해 주세요.');
+        else setError('지금 연결이 어려워요. 잠시 후 다시 시도해 주세요.');
+      } else {
+        setError('지금 연결이 어려워요. 잠시 후 다시 시도해 주세요.');
+      }
     } finally {
       setBusy(false);
     }
@@ -115,6 +121,15 @@ export function Home({ onResult, onTab }: Props) {
               <div className="example-chip">"이 문자 수상해"</div>
               <div className="example-chip">"{family.relation}에게 전화해줘"</div>
             </div>
+
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={onStartChat}
+              style={{ marginTop: 18 }}
+            >
+              💬 대화로 묻기
+            </button>
           </div>
         </div>
         <BottomTabs active="home" onSelect={onTab} />

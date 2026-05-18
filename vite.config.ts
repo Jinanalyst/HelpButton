@@ -11,6 +11,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 // PWABuilder.com and Bubblewrap read this manifest at the deployed URL to build the APK.
 
 export default defineConfig({
+  base: '/app/',
   plugins: [
     react(),
     VitePWA({
@@ -24,8 +25,8 @@ export default defineConfig({
         description: '시니어를 위한 음성 도우미. 누르고 말씀하시면 도와드려요.',
         lang: 'ko-KR',
         dir: 'ltr',
-        start_url: '/',
-        scope: '/',
+        start_url: '/app/',
+        scope: '/app/',
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#F4F8FA',

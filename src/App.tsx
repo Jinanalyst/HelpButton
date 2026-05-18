@@ -7,6 +7,7 @@ import { PhoneFrame } from './components/PhoneFrame';
 import type { Tab } from './components/BottomTabs';
 import { Onboarding } from './screens/Onboarding';
 import { Home } from './screens/Home';
+import { Chat } from './screens/Chat';
 import { Result } from './screens/Result';
 import { History } from './screens/History';
 import { HistoryDetail } from './screens/HistoryDetail';
@@ -19,6 +20,7 @@ import type { ClassifyResult, HistoryItem } from './lib/types';
 type Screen =
   | { name: 'onboarding' }
   | { name: 'home' }
+  | { name: 'chat' }
   | { name: 'result'; transcript: string; result: ClassifyResult }
   | { name: 'history' }
   | { name: 'history-detail'; item: HistoryItem }
@@ -58,8 +60,11 @@ export default function App() {
               setScreen({ name: 'result', transcript, result })
             }
             onTab={goTab}
+            onStartChat={() => setScreen({ name: 'chat' })}
           />
         );
+      case 'chat':
+        return <Chat onBack={() => setScreen({ name: 'home' })} />;
       case 'result':
         return (
           <Result

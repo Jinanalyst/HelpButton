@@ -40,6 +40,6 @@
   ],
   "rewrites": [
     { "source": "/", "destination": "/landing/index.html" },
-    { "source": "/((?!api/|.well-known/|landing/|.*\\..*$).*)", "destination": "/index.html" }
+    { "source": "/app/((?!.*\\..*$).+)", "destination": "/app/index.html" }
   ]
 }

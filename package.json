@@ -8,13 +8,14 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/relocate-app-build.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "generate-pwa-assets": "pwa-assets-generator"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",
+    "openai": "^6.38.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "zod": "^4.4.3"

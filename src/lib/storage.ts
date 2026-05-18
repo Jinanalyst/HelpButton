@@ -74,6 +74,15 @@ export function addHistory(item: HistoryItem): void {
   if (list.length > 100) list.length = 100;
   safeSet(KEYS.history, list);
 }
+// Insert or replace a history entry by id (used by chat sessions that grow turn-by-turn).
+export function upsertHistory(item: HistoryItem): void {
+  const list = getHistory();
+  const idx = list.findIndex((x) => x.id === item.id);
+  if (idx >= 0) list.splice(idx, 1);
+  list.unshift(item);
+  if (list.length > 100) list.length = 100;
+  safeSet(KEYS.history, list);
+}
 export function clearHistory(): void {
   safeSet(KEYS.history, []);
 }
