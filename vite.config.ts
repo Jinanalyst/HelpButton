@@ -15,6 +15,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      manifestFilename: 'manifest.json',
       // Files in public/ that should also be precached.
       includeAssets: ['icon.svg', 'favicon.ico', 'apple-touch-icon-180x180.png', 'privacy.html'],
       manifest: {
