@@ -47,9 +47,10 @@ function iconFor(intent: Intent, risk: HistoryItem['risk_level']) {
 interface Props {
   onBack: () => void;
   onTab: (t: Tab) => void;
+  onOpen: (item: HistoryItem) => void;
 }
 
-export function History({ onBack, onTab }: Props) {
+export function History({ onBack, onTab, onOpen }: Props) {
   const items = getHistory();
 
   const grouped = items.reduce<Record<string, HistoryItem[]>>((acc, item) => {
@@ -88,14 +89,19 @@ export function History({ onBack, onTab }: Props) {
                 {group.map((item) => {
                   const ico = iconFor(item.intent, item.risk_level);
                   return (
-                    <div key={item.id} className="history-item">
+                    <button
+                      key={item.id}
+                      type="button"
+                      className="history-item clickable"
+                      onClick={() => onOpen(item)}
+                    >
                       <div className={`history-icon ${ico.cls}`}>{ico.icon}</div>
                       <div className="body">
                         <div className="title">{item.title}</div>
                         <div className="meta">{fmtTime(item.timestamp)}</div>
                       </div>
                       <ChevronRight size={20} color="#8696A4" />
-                    </div>
+                    </button>
                   );
                 })}
               </div>

@@ -38,9 +38,9 @@ export function markOnboarded(): void {
 
 // ---- Family contact ----
 const DEFAULT_FAMILY: FamilyContact = {
-  name: '김상우',
-  relation: '큰아들',
-  phone: '010-2345-6789',
+  name: '',
+  relation: '보호자',
+  phone: '',
 };
 export function getFamily(): FamilyContact {
   return safeGet<FamilyContact>(KEYS.family, DEFAULT_FAMILY);

@@ -73,6 +73,7 @@ export interface HistoryItem {
   risk_level: RiskLevel;
   title: string;
   outcome?: string; // e.g. "가족에게 알림", "삭제 안내"
+  result?: ClassifyResult; // full AI response, used by the chat-style detail view
 }
 
 export type Plan = 'free' | 'safe_annual' | 'premium_annual';

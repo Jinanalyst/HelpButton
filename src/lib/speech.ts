@@ -112,6 +112,13 @@ export function listenOnce(opts: ListenOptions = {}): ListenHandle {
   };
 }
 
+/** Map the persisted voiceVolume setting to a 0–1 utterance volume. */
+export function volumeFor(setting: 'low' | 'normal' | 'loud'): number {
+  if (setting === 'low') return 0.35;
+  if (setting === 'loud') return 1.0;
+  return 0.7;
+}
+
 /** Speak Korean text aloud via SpeechSynthesis. Safe no-op when unsupported. */
 export function speak(text: string, opts: { rate?: number; volume?: number } = {}): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;

@@ -68,6 +68,7 @@ export function Home({ onResult, onTab }: Props) {
         intent: result.intent,
         risk_level: result.risk_level,
         title: result.title,
+        result,
       });
       // Speak the title aloud for accessibility.
       speak(result.title);

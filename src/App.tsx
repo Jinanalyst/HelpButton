@@ -9,17 +9,19 @@ import { Onboarding } from './screens/Onboarding';
 import { Home } from './screens/Home';
 import { Result } from './screens/Result';
 import { History } from './screens/History';
+import { HistoryDetail } from './screens/HistoryDetail';
 import { Guardian } from './screens/Guardian';
 import { Payment } from './screens/Payment';
 import { hasOnboarded, getSettings } from './lib/storage';
 import { stopSpeaking } from './lib/speech';
-import type { ClassifyResult } from './lib/types';
+import type { ClassifyResult, HistoryItem } from './lib/types';
 
 type Screen =
   | { name: 'onboarding' }
   | { name: 'home' }
   | { name: 'result'; transcript: string; result: ClassifyResult }
   | { name: 'history' }
+  | { name: 'history-detail'; item: HistoryItem }
   | { name: 'guardian' }
   | { name: 'payment' };
 
@@ -67,7 +69,17 @@ export default function App() {
           />
         );
       case 'history':
-        return <History onBack={() => setScreen({ name: 'home' })} onTab={goTab} />;
+        return (
+          <History
+            onBack={() => setScreen({ name: 'home' })}
+            onTab={goTab}
+            onOpen={(item) => setScreen({ name: 'history-detail', item })}
+          />
+        );
+      case 'history-detail':
+        return (
+          <HistoryDetail item={screen.item} onBack={() => setScreen({ name: 'history' })} />
+        );
       case 'guardian':
         return (
           <Guardian

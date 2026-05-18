@@ -11,8 +11,21 @@ import {
   Type,
   Volume,
 } from '../lib/icons';
-import { getFamily, getSettings, setFamily as saveFamily, setSettings } from '../lib/storage';
-import type { Settings } from '../lib/types';
+import {
+  getFamily,
+  getSettings,
+  getSubscription,
+  setFamily as saveFamily,
+  setSettings,
+} from '../lib/storage';
+import { speak, volumeFor } from '../lib/speech';
+import type { Plan, Settings } from '../lib/types';
+
+const PLAN_LABEL: Record<Plan, string> = {
+  free: '무료',
+  safe_annual: '안심 연간',
+  premium_annual: '프리미엄 연간',
+};
 
 interface Props {
   onBack: () => void;
@@ -20,10 +33,49 @@ interface Props {
   onOpenPayment: () => void;
 }
 
+interface ContactsManager {
+  select: (
+    properties: string[],
+    options?: { multiple?: boolean },
+  ) => Promise<Array<{ name?: string[]; tel?: string[] }>>;
+}
+
+function getContactsApi(): ContactsManager | null {
+  const nav = navigator as Navigator & { contacts?: ContactsManager };
+  return nav.contacts && typeof nav.contacts.select === 'function' ? nav.contacts : null;
+}
+
 export function Guardian({ onBack, onTab, onOpenPayment }: Props) {
   const [family, setFamilyState] = useState(getFamily());
   const [settings, setSettingsState] = useState<Settings>(getSettings());
   const [editingFamily, setEditingFamily] = useState(false);
+  const [pickerError, setPickerError] = useState<string | null>(null);
+  const subscription = getSubscription();
+
+  const hasContact = family.phone.trim().length > 0;
+  const contactsApi = getContactsApi();
+
+  const pickFromContacts = async () => {
+    setPickerError(null);
+    const api = getContactsApi();
+    if (!api) {
+      setPickerError('이 기기에서는 연락처 선택을 지원하지 않아요. 직접 입력해 주세요.');
+      setEditingFamily(true);
+      return;
+    }
+    try {
+      const picked = await api.select(['name', 'tel'], { multiple: false });
+      if (!picked || picked.length === 0) return;
+      const c = picked[0];
+      const name = (c.name && c.name[0]) || '';
+      const phone = (c.tel && c.tel[0]) || '';
+      const next = { ...family, name, phone };
+      setFamilyState(next);
+      saveFamily(next);
+    } catch {
+      setPickerError('연락처를 가져오지 못했어요. 권한을 확인해 주세요.');
+    }
+  };
 
   const toggle = (key: keyof Settings) => {
     if (typeof settings[key] !== 'boolean') return;
@@ -44,29 +96,53 @@ export function Guardian({ onBack, onTab, onOpenPayment }: Props) {
 
         <div className="family-card">
           <div className="role">등록된 보호자</div>
-          <div className="name">
-            {family.relation} {family.name}
-          </div>
-          <div className="number">{family.phone}</div>
-          <div className="family-actions">
-            <a className="family-btn" href={`tel:${family.phone.replace(/-/g, '')}`}>
-              <Phone size={18} />
-              전화
-            </a>
-            <a className="family-btn" href={`sms:${family.phone.replace(/-/g, '')}`}>
-              <Message size={18} />
-              문자
-            </a>
-          </div>
+          {hasContact ? (
+            <>
+              <div className="name">
+                {family.relation} {family.name}
+              </div>
+              <div className="number">{family.phone}</div>
+              <div className="family-actions">
+                <a className="family-btn" href={`tel:${family.phone.replace(/-/g, '')}`}>
+                  <Phone size={18} />
+                  전화
+                </a>
+                <a className="family-btn" href={`sms:${family.phone.replace(/-/g, '')}`}>
+                  <Message size={18} />
+                  문자
+                </a>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="name">등록된 보호자가 없어요</div>
+              <div className="number">연락처에서 보호자를 선택해 주세요</div>
+              <div className="family-actions">
+                <button type="button" className="family-btn" onClick={pickFromContacts}>
+                  <Phone size={18} />
+                  연락처에서 가져오기
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
-        <button
-          type="button"
-          className="link-row"
-          onClick={() => setEditingFamily((v) => !v)}
-        >
-          {editingFamily ? '저장 후 닫기' : '보호자 정보 수정'}
-        </button>
+        {pickerError && <div className="footer-note">{pickerError}</div>}
+
+        <div className="family-edit-actions">
+          {hasContact && contactsApi && (
+            <button type="button" className="link-row" onClick={pickFromContacts}>
+              연락처에서 다시 선택
+            </button>
+          )}
+          <button
+            type="button"
+            className="link-row"
+            onClick={() => setEditingFamily((v) => !v)}
+          >
+            {editingFamily ? '저장 후 닫기' : '보호자 정보 수정'}
+          </button>
+        </div>
 
         {editingFamily && (
           <div className="edit-card">
@@ -130,6 +206,7 @@ export function Guardian({ onBack, onTab, onOpenPayment }: Props) {
                 const updated = { ...settings, fontScale: next };
                 setSettingsState(updated);
                 setSettings(updated);
+                document.documentElement.dataset.fontScale = next;
               }}
             >
               <ChevronRight size={18} />
@@ -155,6 +232,7 @@ export function Guardian({ onBack, onTab, onOpenPayment }: Props) {
                 const updated = { ...settings, voiceVolume: next };
                 setSettingsState(updated);
                 setSettings(updated);
+                speak('안녕하세요', { volume: volumeFor(next) });
               }}
             >
               <ChevronRight size={18} />
@@ -193,7 +271,7 @@ export function Guardian({ onBack, onTab, onOpenPayment }: Props) {
               <Card size={20} />
             </div>
             <div className="lbl">구독 관리</div>
-            <div className="val">무료</div>
+            <div className="val">{PLAN_LABEL[subscription.plan]}</div>
             <ChevronRight size={18} className="chev" />
           </button>
         </div>
