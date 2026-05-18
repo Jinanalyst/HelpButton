@@ -62,6 +62,14 @@ export interface FamilyContact {
   phone: string;
 }
 
+// App-level consent record for the contacts feature. The browser still shows
+// its own native permission prompt when `navigator.contacts.select` runs;
+// this is the user's prior in-app agreement to use the feature at all.
+export interface ContactsConsent {
+  granted: boolean;
+  grantedAt: number | null;
+}
+
 export interface Settings {
   fontScale: 'normal' | 'large' | 'xlarge';
   voiceVolume: 'low' | 'normal' | 'loud';

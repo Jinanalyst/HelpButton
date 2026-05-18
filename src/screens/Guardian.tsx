@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { BottomTabs, type Tab } from '../components/BottomTabs';
+import { ContactsConsent } from '../components/ContactsConsent';
 import {
   Bell,
   Card,
@@ -12,9 +13,12 @@ import {
   Volume,
 } from '../lib/icons';
 import {
+  getContactsConsent,
   getFamily,
   getSettings,
   getSubscription,
+  grantContactsConsent,
+  revokeContactsConsent,
   setFamily as saveFamily,
   setSettings,
 } from '../lib/storage';
@@ -50,12 +54,15 @@ export function Guardian({ onBack, onTab, onOpenPayment }: Props) {
   const [settings, setSettingsState] = useState<Settings>(getSettings());
   const [editingFamily, setEditingFamily] = useState(false);
   const [pickerError, setPickerError] = useState<string | null>(null);
+  // When set, the consent popup is shown. After "동의" we proceed to the picker.
+  const [askConsent, setAskConsent] = useState(false);
+  const [consentGranted, setConsentGranted] = useState(getContactsConsent().granted);
   const subscription = getSubscription();
 
   const hasContact = family.phone.trim().length > 0;
   const contactsApi = getContactsApi();
 
-  const pickFromContacts = async () => {
+  const runPicker = async () => {
     setPickerError(null);
     const api = getContactsApi();
     if (!api) {
@@ -75,6 +82,30 @@ export function Guardian({ onBack, onTab, onOpenPayment }: Props) {
     } catch {
       setPickerError('연락처를 가져오지 못했어요. 권한을 확인해 주세요.');
     }
+  };
+
+  // Entry point: ask for consent first (once), then open the picker.
+  const startPicker = () => {
+    if (getContactsConsent().granted) {
+      void runPicker();
+      return;
+    }
+    setAskConsent(true);
+  };
+
+  const agreeAndContinue = () => {
+    grantContactsConsent();
+    setConsentGranted(true);
+    setAskConsent(false);
+    void runPicker();
+  };
+
+  const cancelConsent = () => setAskConsent(false);
+
+  const revoke = () => {
+    if (!window.confirm('연락처 사용 동의를 해제할까요?')) return;
+    revokeContactsConsent();
+    setConsentGranted(false);
   };
 
   const toggle = (key: keyof Settings) => {
@@ -118,7 +149,7 @@ export function Guardian({ onBack, onTab, onOpenPayment }: Props) {
               <div className="name">등록된 보호자가 없어요</div>
               <div className="number">연락처에서 보호자를 선택해 주세요</div>
               <div className="family-actions">
-                <button type="button" className="family-btn" onClick={pickFromContacts}>
+                <button type="button" className="family-btn" onClick={() => startPicker()}>
                   <Phone size={18} />
                   연락처에서 가져오기
                 </button>
@@ -131,7 +162,7 @@ export function Guardian({ onBack, onTab, onOpenPayment }: Props) {
 
         <div className="family-edit-actions">
           {hasContact && contactsApi && (
-            <button type="button" className="link-row" onClick={pickFromContacts}>
+            <button type="button" className="link-row" onClick={() => startPicker()}>
               연락처에서 다시 선택
             </button>
           )}
@@ -142,6 +173,16 @@ export function Guardian({ onBack, onTab, onOpenPayment }: Props) {
           >
             {editingFamily ? '저장 후 닫기' : '보호자 정보 수정'}
           </button>
+          {consentGranted && (
+            <button
+              type="button"
+              className="link-row"
+              onClick={revoke}
+              style={{ color: 'var(--danger)' }}
+            >
+              연락처 사용 동의 해제
+            </button>
+          )}
         </div>
 
         {editingFamily && (
@@ -281,6 +322,8 @@ export function Guardian({ onBack, onTab, onOpenPayment }: Props) {
         </div>
       </div>
       <BottomTabs active="guardian" onSelect={onTab} />
+
+      {askConsent && <ContactsConsent onAgree={agreeAndContinue} onCancel={cancelConsent} />}
     </section>
   );
 }

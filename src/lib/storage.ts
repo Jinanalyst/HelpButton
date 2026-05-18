@@ -1,6 +1,12 @@
 // LocalStorage-backed persistence. No login → all state is on-device.
 
-import type { FamilyContact, HistoryItem, Settings, Subscription } from './types';
+import type {
+  ContactsConsent,
+  FamilyContact,
+  HistoryItem,
+  Settings,
+  Subscription,
+} from './types';
 
 const KEYS = {
   onboarded: 'hb.onboarded',
@@ -8,6 +14,7 @@ const KEYS = {
   settings: 'hb.settings',
   history: 'hb.history',
   subscription: 'hb.subscription',
+  contactsConsent: 'hb.contactsConsent',
 } as const;
 
 function safeGet<T>(key: string, fallback: T): T {
@@ -85,6 +92,21 @@ export function upsertHistory(item: HistoryItem): void {
 }
 export function clearHistory(): void {
   safeSet(KEYS.history, []);
+}
+
+// ---- Contacts consent (app-level agreement before invoking the browser API) ----
+const DEFAULT_CONSENT: ContactsConsent = { granted: false, grantedAt: null };
+export function getContactsConsent(): ContactsConsent {
+  return safeGet<ContactsConsent>(KEYS.contactsConsent, DEFAULT_CONSENT);
+}
+export function setContactsConsent(next: ContactsConsent): void {
+  safeSet(KEYS.contactsConsent, next);
+}
+export function grantContactsConsent(): void {
+  setContactsConsent({ granted: true, grantedAt: Date.now() });
+}
+export function revokeContactsConsent(): void {
+  setContactsConsent({ granted: false, grantedAt: null });
 }
 
 // ---- Subscription ----
