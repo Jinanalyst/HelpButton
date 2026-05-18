@@ -1,15 +1,16 @@
-import { useState } from 'react';
 import { Check, ChevronLeft, Shield } from '../lib/icons';
-import { getSubscription, setSubscription } from '../lib/storage';
-import type { Plan } from '../lib/types';
+import { FREE_DAILY_LIMIT, getSubscription, getUsageToday } from '../lib/storage';
 
+// Paid plans are listed for preview only — payment infrastructure ships with
+// the app-store release. For now everyone is on the free plan.
 interface PlanDef {
-  id: Plan;
+  id: 'free' | 'safe_annual' | 'premium_annual';
   name: string;
   priceLabel: string;
   features: string[];
   featured?: boolean;
   tag?: string;
+  comingSoon?: boolean;
 }
 
 const PLANS: PlanDef[] = [
@@ -17,14 +18,15 @@ const PLANS: PlanDef[] = [
     id: 'free',
     name: '무료',
     priceLabel: '0원',
-    features: ['하루 5번까지 도움 요청', '기본 보이스피싱 확인'],
+    features: [`하루 ${FREE_DAILY_LIMIT}번까지 도움 요청`, '기본 보이스피싱 확인'],
   },
   {
     id: 'safe_annual',
     name: '안심 연간 플랜',
     priceLabel: '49,000원 / 1년',
     featured: true,
-    tag: '추천',
+    tag: '준비 중',
+    comingSoon: true,
     features: [
       '도움 요청 무제한',
       '고급 보이스피싱 분석 (링크·문구 검사)',
@@ -36,6 +38,8 @@ const PLANS: PlanDef[] = [
     id: 'premium_annual',
     name: '프리미엄 연간 플랜',
     priceLabel: '99,000원 / 1년',
+    comingSoon: true,
+    tag: '준비 중',
     features: [
       '안심 플랜의 모든 기능',
       '가족 대시보드 (도움 기록 공유)',
@@ -50,19 +54,9 @@ interface Props {
 }
 
 export function Payment({ onBack }: Props) {
-  const [current, setCurrent] = useState<Plan>(getSubscription().plan);
-
-  const choose = (plan: Plan) => {
-    if (plan === current) return;
-    const ok = window.confirm(
-      `${PLANS.find((p) => p.id === plan)?.name}(으)로 변경하시겠어요? 결제 진행 화면이 열립니다.`,
-    );
-    if (!ok) return;
-    // In production this is where you'd hand off to a payment provider.
-    // We just persist the choice locally for the prototype.
-    setSubscription({ plan });
-    setCurrent(plan);
-  };
+  const current = getSubscription().plan;
+  const usage = getUsageToday();
+  const remaining = Math.max(0, FREE_DAILY_LIMIT - usage.count);
 
   return (
     <section className="screen payment-screen" aria-label="구독 관리">
@@ -75,9 +69,9 @@ export function Payment({ onBack }: Props) {
         </div>
 
         <p className="payment-intro">
-          부모님이 더 안전하게 쓰실 수 있도록
+          지금은 무료 플랜으로 사용하실 수 있어요.
           <br />
-          가족이 도와주실 수 있어요.
+          유료 플랜은 곧 시작돼요.
         </p>
 
         {PLANS.map((p) => {
@@ -86,6 +80,7 @@ export function Payment({ onBack }: Props) {
             <div
               key={p.id}
               className={`plan${p.featured ? ' featured' : ''}${isCurrent ? ' is-current' : ''}`}
+              style={p.comingSoon ? { opacity: 0.7 } : undefined}
             >
               {p.tag && <span className="plan-tag">{p.tag}</span>}
               <div className="plan-top">
@@ -105,13 +100,23 @@ export function Payment({ onBack }: Props) {
                   </li>
                 ))}
               </ul>
-              {!isCurrent && (
-                <button
-                  className={`btn ${p.featured ? 'btn-primary' : 'btn-ghost'}`}
-                  type="button"
-                  onClick={() => choose(p.id)}
+              {p.id === 'free' && isCurrent && (
+                <div
+                  style={{
+                    marginTop: 10,
+                    padding: '10px 12px',
+                    borderRadius: 10,
+                    background: 'rgba(0, 122, 255, 0.08)',
+                    color: 'var(--text)',
+                    fontWeight: 600,
+                  }}
                 >
-                  {p.id === 'free' ? '무료로 전환' : `${p.name} 시작하기`}
+                  오늘 남은 횟수 {remaining}회 / {FREE_DAILY_LIMIT}회
+                </div>
+              )}
+              {p.comingSoon && (
+                <button className="btn btn-ghost" type="button" disabled style={{ opacity: 0.6 }}>
+                  앱 출시 후 시작돼요
                 </button>
               )}
             </div>

@@ -6,6 +6,7 @@ import type {
   HistoryItem,
   Settings,
   Subscription,
+  UsageRecord,
 } from './types';
 
 const KEYS = {
@@ -15,7 +16,11 @@ const KEYS = {
   history: 'hb.history',
   subscription: 'hb.subscription',
   contactsConsent: 'hb.contactsConsent',
+  usage: 'hb.usage',
 } as const;
+
+// Free-plan cap. Centralized so UI and gate logic stay in sync.
+export const FREE_DAILY_LIMIT = 5;
 
 function safeGet<T>(key: string, fallback: T): T {
   try {
@@ -107,6 +112,41 @@ export function grantContactsConsent(): void {
 }
 export function revokeContactsConsent(): void {
   setContactsConsent({ granted: false, grantedAt: null });
+}
+
+// ---- Usage counter (free-plan daily cap) ----
+function todayKey(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+export function getUsageToday(): UsageRecord {
+  const raw = safeGet<UsageRecord>(KEYS.usage, { day: todayKey(), count: 0 });
+  const today = todayKey();
+  if (raw.day !== today) return { day: today, count: 0 };
+  return raw;
+}
+
+// Returns the new count after bumping.
+export function incrementUsage(): number {
+  const cur = getUsageToday();
+  const next: UsageRecord = { day: cur.day, count: cur.count + 1 };
+  safeSet(KEYS.usage, next);
+  return next.count;
+}
+
+export function resetUsage(): void {
+  safeSet(KEYS.usage, { day: todayKey(), count: 0 });
+}
+
+// Free plan callers must check this before billing-affecting calls.
+export function isFreeLimitReached(): boolean {
+  const sub = getSubscription();
+  if (sub.plan !== 'free') return false;
+  return getUsageToday().count >= FREE_DAILY_LIMIT;
 }
 
 // ---- Subscription ----

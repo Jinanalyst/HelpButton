@@ -11,7 +11,13 @@ import {
 } from '../lib/speech';
 import { chat, ChatUnavailableError, runChatAction } from '../lib/chat';
 import { newSession, saveChatSession } from '../lib/chatHistory';
-import { getFamily, getSettings } from '../lib/storage';
+import {
+  FREE_DAILY_LIMIT,
+  getFamily,
+  getSettings,
+  incrementUsage,
+  isFreeLimitReached,
+} from '../lib/storage';
 import type { ChatAction, ChatSession, ChatTurn } from '../lib/types';
 
 interface Props {
@@ -58,6 +64,10 @@ export function Chat({ onBack }: Props) {
   const sendUserTurn = async (text: string) => {
     if (!text.trim()) return;
     setError(null);
+    if (isFreeLimitReached()) {
+      setError(`오늘 도움 요청 ${FREE_DAILY_LIMIT}번을 모두 쓰셨어요. 내일 다시 사용할 수 있어요.`);
+      return;
+    }
     const userTurn: ChatTurn = { role: 'user', content: text.trim(), timestamp: Date.now() };
     const nextTurns = [...session.turns, userTurn];
     setSession((s) => ({ ...s, turns: nextTurns, updatedAt: Date.now() }));
@@ -65,6 +75,7 @@ export function Chat({ onBack }: Props) {
 
     try {
       const reply = await chat(nextTurns, family);
+      incrementUsage();
       const assistantTurn: ChatTurn = {
         role: 'assistant',
         content: reply.reply,

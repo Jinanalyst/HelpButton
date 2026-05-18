@@ -3,7 +3,16 @@ import { BottomTabs, type Tab } from '../components/BottomTabs';
 import { ListeningOverlay } from '../components/ListeningOverlay';
 import { Mic } from '../lib/icons';
 import { classify, ClassifyUnavailableError } from '../lib/api';
-import { addHistory, getFamily, getSettings } from '../lib/storage';
+import {
+  addHistory,
+  FREE_DAILY_LIMIT,
+  getFamily,
+  getSettings,
+  getSubscription,
+  getUsageToday,
+  incrementUsage,
+  isFreeLimitReached,
+} from '../lib/storage';
 import { isSpeechSupported, listenOnce, speakAi, volumeFor } from '../lib/speech';
 import type { ClassifyResult } from '../lib/types';
 
@@ -24,13 +33,23 @@ export function Home({ onResult, onTab, onStartChat }: Props) {
   const [partial, setPartial] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [usageCount, setUsageCount] = useState(getUsageToday().count);
   const family = getFamily();
   const supported = isSpeechSupported();
+  const plan = getSubscription().plan;
+  const isFree = plan === 'free';
+  const limitReached = isFree && usageCount >= FREE_DAILY_LIMIT;
+  const remaining = Math.max(0, FREE_DAILY_LIMIT - usageCount);
 
   const startListening = async () => {
     if (busy) return;
     setError(null);
     setPartial('');
+
+    if (isFreeLimitReached()) {
+      setError(`오늘 도움 요청 ${FREE_DAILY_LIMIT}번을 모두 쓰셨어요. 내일 다시 사용할 수 있어요.`);
+      return;
+    }
 
     if (!supported) {
       // Fallback for unsupported browsers (Firefox, older Safari): prompt typed input.
@@ -62,6 +81,8 @@ export function Home({ onResult, onTab, onStartChat }: Props) {
     setBusy(true);
     try {
       const result = await classify(transcript);
+      const next = incrementUsage();
+      setUsageCount(next);
       addHistory({
         id: `${Date.now()}`,
         timestamp: Date.now(),
@@ -102,15 +123,29 @@ export function Home({ onResult, onTab, onStartChat }: Props) {
               className="mic-btn"
               aria-label="도움 요청"
               onClick={startListening}
-              disabled={busy}
+              disabled={busy || limitReached}
               type="button"
+              style={limitReached ? { opacity: 0.5 } : undefined}
             >
               <Mic size={92} />
             </button>
             <div className="mic-label">
-              {busy ? '잠시만 기다려 주세요…' : '도움이 필요하면 누르세요'}
+              {busy
+                ? '잠시만 기다려 주세요…'
+                : limitReached
+                  ? '오늘은 다 사용하셨어요'
+                  : '도움이 필요하면 누르세요'}
             </div>
-            <div className="mic-hint">버튼을 한 번 누르고 편하게 말씀해 주세요</div>
+            <div className="mic-hint">
+              {limitReached
+                ? '내일 다시 사용할 수 있어요'
+                : '버튼을 한 번 누르고 편하게 말씀해 주세요'}
+            </div>
+            {isFree && !limitReached && (
+              <div className="mic-hint" style={{ marginTop: 4 }}>
+                오늘 남은 횟수 {remaining}회 / {FREE_DAILY_LIMIT}회
+              </div>
+            )}
             {!supported && (
               <div className="mic-hint" style={{ color: 'var(--warn)' }}>
                 이 브라우저는 음성 인식을 지원하지 않아요. 버튼을 누르면 글로 입력할 수 있어요.

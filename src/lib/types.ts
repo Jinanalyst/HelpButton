@@ -149,3 +149,10 @@ export interface Subscription {
   plan: Plan;
   renewsAt?: number;
 }
+
+// Daily usage counter for the free plan (5/day cap).
+// `day` is a local YYYY-MM-DD string; when it differs from today, count resets.
+export interface UsageRecord {
+  day: string;
+  count: number;
+}
