@@ -38,8 +38,10 @@
       ]
     }
   ],
+  "redirects": [
+    { "source": "/", "destination": "/app/", "permanent": false }
+  ],
   "rewrites": [
-    { "source": "/", "destination": "/landing/index.html" },
     { "source": "/app/((?!.*\\..*$).+)", "destination": "/app/index.html" }
   ]
 }
