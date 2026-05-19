@@ -55,7 +55,7 @@ export default async function handler(req: Request): Promise<Response> {
     `플랜: ${plan}\n` +
     `금액: ${priceLabel}\n` +
     `시간(KST): ${when}\n\n` +
-    `우리은행 100295547551 입금 내역을 확인하고, 일치하면 그대로 두세요.\n` +
+    `우리은행 1002959547551 입금 내역을 확인하고, 일치하면 그대로 두세요.\n` +
     `일치하지 않으면 사용자의 구독을 무료로 되돌려 주세요.`;
   const html =
     `<h2>헬프버튼 결제 알림</h2>` +
@@ -66,7 +66,7 @@ export default async function handler(req: Request): Promise<Response> {
     `<li><strong>금액:</strong> ${priceLabel}</li>` +
     `<li><strong>시간(KST):</strong> ${when}</li>` +
     `</ul>` +
-    `<p>우리은행 <strong>100295547551</strong> 입금 내역을 확인하세요.</p>`;
+    `<p>우리은행 <strong>1002959547551</strong> 입금 내역을 확인하세요.</p>`;
 
   try {
     const resp = await fetch('https://api.resend.com/emails', {

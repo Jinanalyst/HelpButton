@@ -19,7 +19,7 @@ interface PlanDef {
 }
 
 const BANK_NAME = '우리은행';
-const BANK_ACCOUNT = '100295547551';
+const BANK_ACCOUNT = '1002959547551';
 const BANK_HOLDER = '장진우';
 
 const PLANS: PlanDef[] = [
