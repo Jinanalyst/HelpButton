@@ -5,7 +5,6 @@ import {
   Card,
   ChevronLeft,
   ChevronRight,
-  Clock,
   Message,
   Phone,
   Type,
@@ -105,13 +104,6 @@ export function Guardian({ onBack, onTab, onOpenPayment }: Props) {
     if (!window.confirm('연락처 사용 동의를 해제할까요?')) return;
     revokeContactsConsent();
     setConsentGranted(false);
-  };
-
-  const toggle = (key: keyof Settings) => {
-    if (typeof settings[key] !== 'boolean') return;
-    const next: Settings = { ...settings, [key]: !settings[key] };
-    setSettingsState(next);
-    setSettings(next);
   };
 
   return (
@@ -277,18 +269,6 @@ export function Guardian({ onBack, onTab, onOpenPayment }: Props) {
             >
               <ChevronRight size={18} />
             </button>
-          </div>
-          <div className="list-row">
-            <div className="ico">
-              <Clock size={20} />
-            </div>
-            <div className="lbl">통화 전 다시 묻기</div>
-            <button
-              type="button"
-              className={`toggle${settings.confirmBeforeCall ? ' on' : ''}`}
-              aria-pressed={settings.confirmBeforeCall}
-              onClick={() => toggle('confirmBeforeCall')}
-            />
           </div>
         </div>
 
