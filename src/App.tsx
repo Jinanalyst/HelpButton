@@ -20,7 +20,7 @@ import type { ClassifyResult, HistoryItem } from './lib/types';
 type Screen =
   | { name: 'onboarding' }
   | { name: 'home' }
-  | { name: 'chat' }
+  | { name: 'chat'; autoStart?: boolean }
   | { name: 'result'; transcript: string; result: ClassifyResult }
   | { name: 'history' }
   | { name: 'history-detail'; item: HistoryItem }
@@ -56,15 +56,12 @@ export default function App() {
       case 'home':
         return (
           <Home
-            onResult={(transcript, result) =>
-              setScreen({ name: 'result', transcript, result })
-            }
             onTab={goTab}
-            onStartChat={() => setScreen({ name: 'chat' })}
+            onStartChat={(autoStart) => setScreen({ name: 'chat', autoStart })}
           />
         );
       case 'chat':
-        return <Chat onBack={() => setScreen({ name: 'home' })} />;
+        return <Chat onBack={() => setScreen({ name: 'home' })} autoStart={screen.autoStart} />;
       case 'result':
         return (
           <Result

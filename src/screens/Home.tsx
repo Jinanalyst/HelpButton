@@ -1,25 +1,17 @@
 import { useState } from 'react';
 import { BottomTabs, type Tab } from '../components/BottomTabs';
-import { ListeningOverlay } from '../components/ListeningOverlay';
 import { Mic } from '../lib/icons';
-import { classify, ClassifyUnavailableError } from '../lib/api';
 import {
-  addHistory,
   FREE_DAILY_LIMIT,
   getFamily,
-  getSettings,
   getSubscription,
   getUsageToday,
-  incrementUsage,
   isFreeLimitReached,
 } from '../lib/storage';
-import { isSpeechSupported, listenOnce, speakAi, volumeFor } from '../lib/speech';
-import type { ClassifyResult } from '../lib/types';
 
 interface Props {
-  onResult: (transcript: string, result: ClassifyResult) => void;
   onTab: (t: Tab) => void;
-  onStartChat: () => void;
+  onStartChat: (autoStart?: boolean) => void;
 }
 
 function todayKo(): string {
@@ -28,157 +20,78 @@ function todayKo(): string {
   return `${d.getMonth() + 1}월 ${d.getDate()}일 ${days[d.getDay()]}요일`;
 }
 
-export function Home({ onResult, onTab, onStartChat }: Props) {
-  const [listening, setListening] = useState(false);
-  const [partial, setPartial] = useState('');
+export function Home({ onTab, onStartChat }: Props) {
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [usageCount, setUsageCount] = useState(getUsageToday().count);
+  const [usageCount] = useState(getUsageToday().count);
   const family = getFamily();
-  const supported = isSpeechSupported();
   const plan = getSubscription().plan;
   const isFree = plan === 'free';
   const limitReached = isFree && usageCount >= FREE_DAILY_LIMIT;
   const remaining = Math.max(0, FREE_DAILY_LIMIT - usageCount);
 
-  const startListening = async () => {
-    if (busy) return;
+  const startListening = () => {
     setError(null);
-    setPartial('');
-
     if (isFreeLimitReached()) {
       setError(`오늘 도움 요청 ${FREE_DAILY_LIMIT}번을 모두 쓰셨어요. 내일 다시 사용할 수 있어요.`);
       return;
     }
-
-    if (!supported) {
-      // Fallback for unsupported browsers (Firefox, older Safari): prompt typed input.
-      const typed = window.prompt('마이크 인식을 사용할 수 없어요.\n도움이 필요한 내용을 입력해 주세요.');
-      if (typed && typed.trim()) {
-        await runClassify(typed.trim());
-      }
-      return;
-    }
-
-    setListening(true);
-    const handle = listenOnce({
-      onPartial: setPartial,
-      onError: (code) => setError(`마이크 오류: ${code}`),
-    });
-    try {
-      const transcript = await handle.promise;
-      setListening(false);
-      await runClassify(transcript);
-    } catch (err) {
-      setListening(false);
-      const message = err instanceof Error ? err.message : String(err);
-      if (message === 'cancelled' || message === 'no_speech_detected') return;
-      setError('한 번 더 말씀해 주세요.');
-    }
-  };
-
-  const runClassify = async (transcript: string) => {
-    setBusy(true);
-    try {
-      const result = await classify(transcript);
-      const next = incrementUsage();
-      setUsageCount(next);
-      addHistory({
-        id: `${Date.now()}`,
-        timestamp: Date.now(),
-        transcript,
-        intent: result.intent,
-        risk_level: result.risk_level,
-        title: result.title,
-        result,
-      });
-      // Speak the title aloud for accessibility.
-      void speakAi(result.title, { volume: volumeFor(getSettings().voiceVolume) });
-      onResult(transcript, result);
-    } catch (err) {
-      if (err instanceof ClassifyUnavailableError) {
-        if (err.reason === 'offline') setError('인터넷 연결을 확인해 주세요.');
-        else if (err.reason === 'rate_limited') setError('잠시 후 다시 시도해 주세요.');
-        else setError('지금 연결이 어려워요. 잠시 후 다시 시도해 주세요.');
-      } else {
-        setError('지금 연결이 어려워요. 잠시 후 다시 시도해 주세요.');
-      }
-    } finally {
-      setBusy(false);
-    }
+    // Hand off to the real multi-turn Chat flow. It calls getUserMedia
+    // (triggering the OS mic-permission prompt on first use), records audio,
+    // sends it to Whisper, and chats back via Claude — no mocks.
+    onStartChat(true);
   };
 
   return (
-    <>
-      <section className="screen main-screen has-tabbar" aria-label="홈">
-        <div className="screen-body">
-          <div className="greeting">
-            <div className="greeting-hello">안녕하세요</div>
-            <div className="greeting-name">{family.relation}의 부모님</div>
-            <div className="greeting-date">{todayKo()}</div>
-          </div>
-
-          <div className="mic-area">
-            <button
-              className="mic-btn"
-              aria-label="도움 요청"
-              onClick={startListening}
-              disabled={busy || limitReached}
-              type="button"
-              style={limitReached ? { opacity: 0.5 } : undefined}
-            >
-              <Mic size={92} />
-            </button>
-            <div className="mic-label">
-              {busy
-                ? '잠시만 기다려 주세요…'
-                : limitReached
-                  ? '오늘은 다 사용하셨어요'
-                  : '도움이 필요하면 누르세요'}
-            </div>
-            <div className="mic-hint">
-              {limitReached
-                ? '내일 다시 사용할 수 있어요'
-                : '버튼을 한 번 누르고 편하게 말씀해 주세요'}
-            </div>
-            {isFree && !limitReached && (
-              <div className="mic-hint" style={{ marginTop: 4 }}>
-                오늘 남은 횟수 {remaining}회 / {FREE_DAILY_LIMIT}회
-              </div>
-            )}
-            {!supported && (
-              <div className="mic-hint" style={{ color: 'var(--warn)' }}>
-                이 브라우저는 음성 인식을 지원하지 않아요. 버튼을 누르면 글로 입력할 수 있어요.
-              </div>
-            )}
-            {error && <div className="error-bar">{error}</div>}
-            <div className="mic-examples">
-              <div className="example-chip">"이 문자 수상해"</div>
-              <div className="example-chip">"{family.relation}에게 전화해줘"</div>
-              <div className="example-chip">"가까운 약국 알려줘"</div>
-            </div>
-
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={onStartChat}
-              style={{ marginTop: 18 }}
-            >
-              💬 대화로 묻기
-            </button>
-          </div>
+    <section className="screen main-screen has-tabbar" aria-label="홈">
+      <div className="screen-body">
+        <div className="greeting">
+          <div className="greeting-hello">안녕하세요</div>
+          <div className="greeting-name">{family.relation}의 부모님</div>
+          <div className="greeting-date">{todayKo()}</div>
         </div>
-        <BottomTabs active="home" onSelect={onTab} />
-      </section>
 
-      <ListeningOverlay
-        visible={listening}
-        partialText={partial}
-        onCancel={() => {
-          setListening(false);
-          setPartial('');
-        }}
-      />
-    </>
+        <div className="mic-area">
+          <button
+            className="mic-btn"
+            aria-label="도움 요청"
+            onClick={startListening}
+            disabled={limitReached}
+            type="button"
+            style={limitReached ? { opacity: 0.5 } : undefined}
+          >
+            <Mic size={92} />
+          </button>
+          <div className="mic-label">
+            {limitReached ? '오늘은 다 사용하셨어요' : '도움이 필요하면 누르세요'}
+          </div>
+          <div className="mic-hint">
+            {limitReached
+              ? '내일 다시 사용할 수 있어요'
+              : '버튼을 누르면 마이크 사용 권한을 묻고, 바로 대화가 시작돼요'}
+          </div>
+          {isFree && !limitReached && (
+            <div className="mic-hint" style={{ marginTop: 4 }}>
+              오늘 남은 횟수 {remaining}회 / {FREE_DAILY_LIMIT}회
+            </div>
+          )}
+          {error && <div className="error-bar">{error}</div>}
+          <div className="mic-examples">
+            <div className="example-chip">"이 문자 수상해"</div>
+            <div className="example-chip">"{family.relation}에게 전화해줘"</div>
+            <div className="example-chip">"가까운 약국 알려줘"</div>
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => onStartChat(false)}
+            style={{ marginTop: 18 }}
+          >
+            💬 글로 시작하기
+          </button>
+        </div>
+      </div>
+      <BottomTabs active="home" onSelect={onTab} />
+    </section>
   );
 }

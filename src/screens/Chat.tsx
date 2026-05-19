@@ -22,6 +22,7 @@ import type { ChatAction, ChatSession, ChatTurn } from '../lib/types';
 
 interface Props {
   onBack: () => void;
+  autoStart?: boolean;
 }
 
 function fmtTime(ts: number): string {
@@ -38,7 +39,7 @@ interface PendingConfirm {
   action: ChatAction;
 }
 
-export function Chat({ onBack }: Props) {
+export function Chat({ onBack, autoStart }: Props) {
   const [session, setSession] = useState<ChatSession>(() => newSession());
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -60,6 +61,13 @@ export function Chat({ onBack }: Props) {
   }, [session]);
 
   useEffect(() => () => stopSpeaking(), []);
+
+  // When the home mic launches us, request mic permission and start recording immediately.
+  useEffect(() => {
+    if (!autoStart) return;
+    void startRecording();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart]);
 
   const sendUserTurn = async (text: string) => {
     if (!text.trim()) return;
