@@ -65,7 +65,6 @@ export function setFamily(contact: FamilyContact): void {
 const DEFAULT_SETTINGS: Settings = {
   fontScale: 'large',
   voiceVolume: 'normal',
-  autoFamilyAlert: true,
   confirmBeforeCall: true,
 };
 export function getSettings(): Settings {

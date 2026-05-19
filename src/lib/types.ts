@@ -73,7 +73,6 @@ export interface ContactsConsent {
 export interface Settings {
   fontScale: 'normal' | 'large' | 'xlarge';
   voiceVolume: 'low' | 'normal' | 'loud';
-  autoFamilyAlert: boolean;
   confirmBeforeCall: boolean;
 }
 

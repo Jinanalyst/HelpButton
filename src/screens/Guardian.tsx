@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { BottomTabs, type Tab } from '../components/BottomTabs';
 import { ContactsConsent } from '../components/ContactsConsent';
 import {
-  Bell,
   Card,
   ChevronLeft,
   ChevronRight,
@@ -278,18 +277,6 @@ export function Guardian({ onBack, onTab, onOpenPayment }: Props) {
             >
               <ChevronRight size={18} />
             </button>
-          </div>
-          <div className="list-row">
-            <div className="ico">
-              <Bell size={20} />
-            </div>
-            <div className="lbl">위험 시 자동 가족 알림</div>
-            <button
-              type="button"
-              className={`toggle${settings.autoFamilyAlert ? ' on' : ''}`}
-              aria-pressed={settings.autoFamilyAlert}
-              onClick={() => toggle('autoFamilyAlert')}
-            />
           </div>
           <div className="list-row">
             <div className="ico">
