@@ -148,6 +148,11 @@ export type Plan = 'free' | 'safe_annual' | 'premium_annual';
 export interface Subscription {
   plan: Plan;
   renewsAt?: number;
+  // Set when the user clicks 결제했어요. The plan flips to safe_annual / premium_annual
+  // optimistically; admin verifies the deposit in the bank statement and can revoke.
+  status?: 'active' | 'pending_review' | 'rejected';
+  depositorName?: string;
+  claimedAt?: number;
 }
 
 // Daily usage counter for the free plan (5/day cap).
